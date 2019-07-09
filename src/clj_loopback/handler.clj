@@ -4,6 +4,8 @@
             [ring.middleware.file-info :refer [wrap-file-info]]
             [ring.middleware.json :refer [wrap-json-response wrap-json-body wrap-json-params]]
             [ring.util.response :refer [response]]
+            [ring.util.codec :refer [form-decode]]
+            [clojure.walk :refer [keywordize-keys]]
             [hiccup.middleware :refer [wrap-base-url]]
             [compojure.handler :as handler]
             [compojure.route :as route]))
@@ -16,7 +18,12 @@
 
 
 (defn handle-loopback [req]
-  (response (dissoc req :body)))
+  (let [add (or (System/getenv "ADD_TO_RESPONSE") "")
+        add-params (keywordize-keys (form-decode add))]
+    (-> req
+        (dissoc :body)
+        (merge add-params)
+        response)))
 
 (def app
   (-> handle-loopback
